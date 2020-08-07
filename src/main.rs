@@ -1,3 +1,5 @@
+mod watching;
+
 #[macro_use] extern crate log;
 use futures::{StreamExt, TryStreamExt, stream};
 use k8s_openapi::api::apps::v1::{
@@ -14,7 +16,6 @@ use kube::{
 };
 use kube_runtime::{watcher};
 use tokio;
-mod watching;
 use watching::WatchTypes;
 use kube_runtime::utils::try_flatten_applied;
 

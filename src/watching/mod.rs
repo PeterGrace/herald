@@ -7,7 +7,6 @@ use k8s_openapi::api::core::v1::{
     Service
 };
 use futures::future::SelectAll;
-use futures::stream::StreamFuture;
 use k8s_openapi::chrono::format::Item;
 
 pub(crate) enum WatchTypes {
@@ -17,6 +16,6 @@ pub(crate) enum WatchTypes {
     Service(Service)
 }
 
-fn setup_combined_watch_stream() -> SelectAll<Item> {
-
+fn setup_combined_watch_stream() -> anyhow::Result<()> {
+Ok(())
 }

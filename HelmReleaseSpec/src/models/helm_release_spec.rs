@@ -14,7 +14,7 @@
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct HelmReleaseSpec {
     #[serde(rename = "chart")]
-    pub chart: crate::models::OneOf<object,object>,
+    pub chart: crate::models::OneOf<HelmReleaseChartGitSpec,HelmReleaseChartRepoSpec>,
     /// If supplied will force Helm upgrade through delete/recreate
     #[serde(rename = "forceUpgrade", skip_serializing_if = "Option::is_none")]
     pub force_upgrade: Option<bool>,

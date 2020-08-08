@@ -9,7 +9,7 @@ use watching::create_and_start_watchers;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("RUST_LOG", "info,kube=debug");
+    std::env::set_var("RUST_LOG", "info,kube=info");
     env_logger::init();
     create_and_start_watchers().await?;
     Ok(())

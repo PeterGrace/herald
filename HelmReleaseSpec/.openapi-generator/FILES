@@ -1,0 +1,16 @@
+.gitignore
+.openapi-generator-ignore
+.travis.yml
+Cargo.toml
+README.md
+docs/HelmReleaseSpec.md
+docs/HelmReleaseSpecRollback.md
+docs/HelmReleaseSpecValueFileSecrets.md
+git_push.sh
+src/apis/configuration.rs
+src/apis/mod.rs
+src/lib.rs
+src/models/helm_release_spec.rs
+src/models/helm_release_spec_rollback.rs
+src/models/helm_release_spec_value_file_secrets.rs
+src/models/mod.rs

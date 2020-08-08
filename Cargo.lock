@@ -570,6 +570,8 @@ dependencies = [
 name = "helmreleasespec"
 version = "1.0.0"
 dependencies = [
+ "k8s-openapi",
+ "kube",
  "reqwest",
  "serde",
  "serde_derive",

@@ -7,13 +7,14 @@ use k8s_openapi::api::core::v1::{
     Service
 };
 use futures::future::SelectAll;
-use k8s_openapi::chrono::format::Item;
+use crate::helmreleasespec::models::HelmReleaseSpec;
 
 pub(crate) enum WatchTypes {
     ConfigMap(ConfigMap),
     Deployment(Deployment),
     Secret(Secret),
-    Service(Service)
+    Service(Service),
+    HelmRelease(HelmReleaseSpec),
 }
 
 fn setup_combined_watch_stream() -> anyhow::Result<()> {

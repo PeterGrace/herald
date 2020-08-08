@@ -1,4 +1,5 @@
 mod watching;
+extern crate helmreleasespec;
 
 #[macro_use] extern crate log;
 use futures::{StreamExt, TryStreamExt, stream};
@@ -18,6 +19,7 @@ use kube_runtime::{watcher};
 use tokio;
 use watching::WatchTypes;
 use kube_runtime::utils::try_flatten_applied;
+use helmreleasespec::models::HelmReleaseSpec;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -28,6 +30,7 @@ async fn main() -> anyhow::Result<()> {
     let cl_secret: Api<Secret> = Api::all(client.clone());
     let cl_configmap: Api<ConfigMap> = Api::all(client.clone());
     let cl_deployment: Api<Deployment> = Api::all(client).clone();
+    let cl_helmrelease: Api<HelmReleaseSpec> = Api::all(client).clone();
     let lp = ListParams::default()
         .allow_bookmarks()
         .labels("kibana.k8s.elastic.co/name=eskeim");
@@ -44,6 +47,9 @@ async fn main() -> anyhow::Result<()> {
     let configmap_stream = try_flatten_applied(watcher(cl_configmap, lp.clone()))
         .map_ok(|d| WatchTypes::ConfigMap(d))
         .boxed();
+    let helmrelease_stream = try_flatten_applied(watcher(cl_helmrelease, lp.clone()))
+        .map_ok(|d| WatchTypes::ConfigMap(d))
+        .boxed();
 
     let mut combined_stream = stream::select_all(vec![
         secret_stream,
@@ -53,6 +59,7 @@ async fn main() -> anyhow::Result<()> {
     ]);
     while let Some(o) = combined_stream.try_next().await? {
         match o {
+            WatchTypes::HelmRelease(hr) => info!("Got HelmRelease: {}", Meta::name(&hr)),
             WatchTypes::ConfigMap(cm) => info!("Got confgmap: {}", Meta::name(&cm)),
             WatchTypes::Secret(secret) => info!("Got secret: {}", Meta::name(&secret)),
             WatchTypes::Service(service) => info!("Got Service: {}", Meta::name(&service)),

@@ -27,6 +27,7 @@ pub enum WatchError {
 
 
 pub async fn create_and_start_watchers() -> anyhow::Result<()> {
+    //println!("crd: {:?}", serde_yaml::to_string(&crate::models::watcher_spec::Watcher::crd()));
     let client = Client::try_default().await?;
     let cl_service: Api<Service> = Api::all(client.clone());
     let cl_secret: Api<Secret> = Api::all(client.clone());
@@ -71,11 +72,7 @@ pub async fn create_and_start_watchers() -> anyhow::Result<()> {
         helmrelease_stream,
         watcher_stream
     ]);
-    loop {
-        select! {
-         _ = secret_stream.poll => {info!("found secret")},
-        }
-    }
+
     while let o = combined_stream.try_next().await {
         if o.is_err() {
             debug!("{}", o.unwrap_err());

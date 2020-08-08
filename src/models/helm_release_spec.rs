@@ -54,26 +54,3 @@ pub struct HelmReleaseSpec {
     #[serde(rename = "wait", skip_serializing_if = "Option::is_none")]
     pub wait: Option<bool>,
 }
-
-impl HelmReleaseSpec {
-    pub fn new(chart: crate::models::HelmReleaseChartTargetSpec) -> HelmReleaseSpec {
-        HelmReleaseSpec {
-            chart,
-            force_upgrade: None,
-            helm_version: None,
-            max_history: None,
-            release_name: None,
-            reset_values: None,
-            rollback: None,
-            skip_cr_ds: None,
-            target_namespace: None,
-            timeout: None,
-            value_file_secrets: None,
-            values: None,
-            //values_from: None,
-            wait: None,
-        }
-    }
-}
-
-

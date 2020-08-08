@@ -18,19 +18,4 @@ pub struct HelmReleaseChartTargetSpec {
     #[serde(rename = "chartPullSecret", skip_serializing_if = "Option::is_none")]
     chart_pull_secret: Option<crate::models::HelmReleaseChartPullSecretSpec>
 }
-impl HelmReleaseChartTargetSpec {
-    pub fn new() -> HelmReleaseChartTargetSpec {
-        HelmReleaseChartTargetSpec {
-            git: None,
-            path: None,
-            git_ref: None,
-            name: None,
-            repository: None,
-            chart_pull_secret: None,
-            version: None,
-            skip_def_update: None
-        }
-    }
-}
-
 

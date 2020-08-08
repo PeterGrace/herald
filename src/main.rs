@@ -1,7 +1,8 @@
 mod watching;
-extern crate helmreleasespec;
+mod models;
 
 #[macro_use] extern crate log;
+#[macro_use] extern crate serde;
 use futures::{StreamExt, TryStreamExt, stream};
 use k8s_openapi::api::apps::v1::{
     Deployment
@@ -19,7 +20,7 @@ use kube_runtime::{watcher};
 use tokio;
 use watching::WatchTypes;
 use kube_runtime::utils::try_flatten_applied;
-use helmreleasespec::models::helm_release_spec::HelmRelease;
+use crate::models::helm_release_spec::HelmRelease;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

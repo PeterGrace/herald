@@ -7,7 +7,7 @@ use k8s_openapi::api::core::v1::{
     Service
 };
 use futures::future::SelectAll;
-use helmreleasespec::models::helm_release_spec::HelmRelease;
+use crate::models::helm_release_spec::HelmRelease;
 
 pub(crate) enum WatchTypes {
     ConfigMap(ConfigMap),

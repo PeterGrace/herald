@@ -27,7 +27,6 @@ pub enum WatchError {
 
 
 pub async fn create_and_start_watchers() -> anyhow::Result<()> {
-    //println!("crd: {:?}", serde_yaml::to_string(&crate::models::watcher_spec::Watcher::crd()));
     let client = Client::try_default().await?;
     let cl_service: Api<Service> = Api::all(client.clone());
     let cl_secret: Api<Secret> = Api::all(client.clone());
@@ -37,7 +36,6 @@ pub async fn create_and_start_watchers() -> anyhow::Result<()> {
     let cl_watchers: Api<Watcher> = Api::all(client.clone());
     let lp = ListParams::default()
         .allow_bookmarks();
-    //.labels("kibana.k8s.elastic.co/name=eskeim");
 
     let service_stream = try_flatten_applied(watcher(cl_service, lp.clone()))
         .map_ok(|d| WatchTypes::Service(d))

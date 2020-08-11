@@ -30,3 +30,5 @@ either = "1.5.3"
 # Some configuration tweaking require reqwest atm
 reqwest = { version = "0.10.6", default-features = false, features = ["json", "gzip", "stream"] }
 thiserror = "1.0.20"
+strum_macros = "0.19.2"
+strum = "0.19.2"

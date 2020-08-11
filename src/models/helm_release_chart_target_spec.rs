@@ -1,5 +1,5 @@
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct HelmReleaseChartTargetSpec {
     #[serde(rename = "git", skip_serializing_if = "Option::is_none")]
     pub git: Option<String>,
@@ -18,4 +18,3 @@ pub struct HelmReleaseChartTargetSpec {
     #[serde(rename = "chartPullSecret", skip_serializing_if = "Option::is_none")]
     chart_pull_secret: Option<crate::models::HelmReleaseChartPullSecretSpec>
 }
-

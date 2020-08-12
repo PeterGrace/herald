@@ -51,6 +51,7 @@ pub async fn create_and_start_watchers() -> anyhow::Result<()> {
         .map_ok(|obj| WatchTypes::ResourceQuota(obj))
         .map_err(|e| WatchError::Unknown(String::from("ResourceQuota"),e.to_string()))
         .boxed());
+
     //DaemonSet(DaemonSet),
     stream_vec.push( try_flatten_applied(watcher(Api::all(client.clone()), lp.clone()))
         .map_ok(|obj| WatchTypes::DaemonSet(obj))
@@ -61,7 +62,6 @@ pub async fn create_and_start_watchers() -> anyhow::Result<()> {
         .map_ok(|obj| WatchTypes::StatefulSet(obj))
         .map_err(|e| WatchError::Unknown(String::from("StatefulSet"),e.to_string()))
         .boxed());
-
     //ReplicaSet(ReplicaSet),
     stream_vec.push( try_flatten_applied(watcher(Api::all(client.clone()), lp.clone()))
         .map_ok(|obj| WatchTypes::ReplicaSet(obj))
@@ -138,7 +138,7 @@ pub async fn create_and_start_watchers() -> anyhow::Result<()> {
                 Some(WatchTypes::Secret(secret)) => info!("Got secret: {}", Meta::name(&secret)),
                 Some(WatchTypes::Service(service)) => info!("Got Service: {}", Meta::name(&service)),
                 Some(WatchTypes::Deployment(d)) => info!("Got deployment: {}", Meta::name(&d)),
-                Some(_) => info!("Something otherwise not aware of occurred"),
+                Some(obj) => info!("Something otherwise not aware of occurred: {:?}", obj),
                 None => info!("Error on reading")
             }
         }

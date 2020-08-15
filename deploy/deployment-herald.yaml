@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: herald
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: herald
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: herald
+      namespace: monitoring
+      labels:
+        app.kubernetes.io/name: herald
+    spec:
+      containers:
+        - name: herald
+          image: dreg.vsix.me:9443/herald:latest
+          imagePullPolicy: Always
+      restartPolicy: Always
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: herald

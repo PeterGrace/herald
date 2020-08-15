@@ -18,8 +18,7 @@ use kube_runtime::utils::try_flatten_applied;
 use crate::models::helm_release_spec::HelmRelease;
 use crate::models::watcher_spec::Watcher;
 pub use crate::watching::watch_types::WatchTypes;
-use futures::stream::BoxStream;
-use k8s_openapi::chrono::format::Item;
+
 
 #[derive(Error, Debug)]
 pub enum WatchError {
@@ -147,17 +146,3 @@ pub async fn create_and_start_watchers() -> anyhow::Result<()> {
 
 
 }
-
-/*
-async fn watch_object(watch_type: String, selector: LabelSelector) -> anyhow::Result<String> {
-    let client = Client::try_default().await?;
-    let api: Api<Resource> = Api::all(client);
-    let lp = ListParams::default()
-        .allow_bookmarks()
-        .labels(selector.as_str());
-    let watcher_stream = try_flatten_applied(watcher(api, lp))
-        .map_ok(|watched| WatchTypes::Watcher(watched))
-        .map_err(|e| WatchError::Unknown(watch_type,e.to_string()))
-        .boxed();
-}
-*/

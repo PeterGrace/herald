@@ -1,0 +1,19 @@
+apiVersion: vsix.me/v1
+kind: Watcher
+metadata:
+  name: testwatcher
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: herald
+spec:
+  watchers:
+    - namespaces:
+        - monitoring
+      target_kind: Deployment
+      selector:
+        matchLabels:
+          app.kubernetes.io/name: herald
+      notifier:
+        url: http://vsix.me
+        method: POST
+        format_template_string: "foobar"

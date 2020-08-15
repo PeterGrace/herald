@@ -16,9 +16,9 @@ use k8s_openapi::Resource;
 use kube_runtime::{watcher};
 use kube_runtime::utils::try_flatten_applied;
 use crate::models::helm_release_spec::HelmRelease;
-use crate::models::watcher_spec::Watcher;
+use crate::models::watcher_spec::{Watcher, WatcherSpec, WatcherItemSpec};
 pub use crate::watching::watch_types::WatchTypes;
-
+use std::collections::BTreeMap;
 
 #[derive(Error, Debug)]
 pub enum WatchError {
@@ -131,18 +131,21 @@ pub async fn create_and_start_watchers() -> anyhow::Result<()> {
             debug!("{}", o.unwrap_err());
         } else {
             match o.unwrap() {
-                Some(WatchTypes::Watcher(w)) => info!("Detected watcher update for: {}", Meta::name(&w)),
-                Some(WatchTypes::HelmRelease(hr)) => info!("Got HelmRelease: {}", Meta::name(&hr)),
-                Some(WatchTypes::ConfigMap(cm)) => info!("Got configmap: {}", Meta::name(&cm)),
-                Some(WatchTypes::Secret(secret)) => info!("Got secret: {}", Meta::name(&secret)),
-                Some(WatchTypes::Service(service)) => info!("Got Service: {}", Meta::name(&service)),
-                Some(WatchTypes::Deployment(d)) => info!("Got deployment: {}", Meta::name(&d)),
-                Some(obj) => info!("Something otherwise not aware of occurred: {:?}", obj),
+                Some(WatchTypes::Watcher(w)) => process_watcher(w),
+                Some(_) => (),
                 None => info!("Error on reading")
             }
         }
     }
     Ok(())
+}
 
+fn process_watcher(w: Watcher) -> ()
+{
+    info!("watcher: {}", Meta::name(&w));
+    for w_ in w.spec.watchers
+    {
+        info!("watch kind: {:#?}", w_);
+    }
 
 }

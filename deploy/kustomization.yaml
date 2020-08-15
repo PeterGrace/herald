@@ -1,2 +1,4 @@
 resources:
   - deployment-herald.yaml
+  - crd-watcher.yaml
+  - watcher-test.yaml

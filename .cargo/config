@@ -1,0 +1,9 @@
+[build]
+#target = "x86_64-pc-windows-msvc"
+
+[target.x86_64-pc-windows-msvc]
+rustflags = [
+    "-Z", "print-link-args",
+    "-C", "link-arg=/stack:4096000",
+    "-C", "link-arg=-zstack-size=4096000"
+]

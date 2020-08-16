@@ -65,11 +65,11 @@ pub async fn create_specific_watcher(input_obj: WatcherItemSpec) -> anyhow::Resu
                 let mut w = watcher(watched, lp).boxed();
                 while let Some(status) = w.try_next().await? {
                     match status {
-                        Event::Applied(s) => info!("Applied object: {}", Meta::name(&s)),
-                        Event::Deleted(s) => info!("Deleted object: {}", Meta::name(&s)),
+                        Event::Applied(s) => info!("Detected apply on spawn-watch-object: {}", Meta::name(&s)),
+                        Event::Deleted(s) => info!("Detected delete on spawned-watch-object: {}", Meta::name(&s)),
                         Event::Restarted(s) => {
                             for deployment in s.iter() {
-                                info!("Restarted object: {}", Meta::name(deployment));
+                                info!("Detected Restart on spawned-watched-object: {}", Meta::name(deployment));
                             }
                         },
                         //_ => info!("Error: {}", WatchError::Unknown(String::from("got a watch event we don't understand")))
@@ -104,9 +104,15 @@ pub async fn create_and_start_watchers() -> anyhow::Result<()> {
     while let Some(watcher_status) = w.try_next().await? {
         match watcher_status {
             Event::Applied(s) => {
+                info!("Processing delete on Watcher: {}",&s.name());
+                if let Some(watch_channels) = watch_registry.get_mut(&s.name()) {
+                    for watch_channel in watch_channels {
+                        watch_channel.send(()).await;
+                    }
+                }
                 let mut watch_vec: Vec<Sender<()>> = Vec::new();
                 let watcher_name = s.name();
-                info!("Processing apply on Watcher watch");
+                info!("Processing apply on Watcher: {}",&s.name());
                 for item in s.spec.watchers.unwrap() {
                     let (tx, mut rx) = channel(1);
                     tokio::spawn(async move {
@@ -121,7 +127,7 @@ pub async fn create_and_start_watchers() -> anyhow::Result<()> {
 
             },
             Event::Deleted(s) => {
-                info!("Processing delete on Watcher watch");
+                info!("Processing delete on Watcher: {}",&s.name());
                 if let Some(watch_channels) = watch_registry.get_mut(&s.name()) {
                     for watch_channel in watch_channels {
                         watch_channel.send(()).await;
@@ -129,8 +135,8 @@ pub async fn create_and_start_watchers() -> anyhow::Result<()> {
                 }
             },
             Event::Restarted(s) => {
-                info!("Processing restart on Watcher watch");
                 for object in s.iter() {
+                    info!("Processing delete on Watcher: {}",&object.name());
                     // first, delete all preexisting watches for this object
                     if let Some(watch_channels) = watch_registry.get_mut(&object.name()) {
                         for watch_channel in watch_channels {
@@ -139,6 +145,7 @@ pub async fn create_and_start_watchers() -> anyhow::Result<()> {
                     }
 
                     // now, recreate all the watches
+                    info!("Processing apply on Watcher: {}",&object.name());
                     let watch_list = object.spec.watchers.clone();
                     let mut watch_channels = Vec::new();
                     for item in watch_list.unwrap() {

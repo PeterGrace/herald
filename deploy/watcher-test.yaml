@@ -12,13 +12,8 @@ spec:
         - monitoring
       targetKind: Deployment
       selector:
-        matchExpressions:
-          - operator: In
-            key: foo
-            values:
-              - foobar
+        matchExpressions: []
         matchLabels:
-          hello: goodbye
           app.kubernetes.io/name: herald
       notifier:
         url: http://vsix.me

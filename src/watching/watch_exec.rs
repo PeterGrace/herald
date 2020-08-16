@@ -3,7 +3,7 @@ use thiserror::Error;
 //use strum_macros::EnumString;
 //use std::str::FromStr;
 use kube::{
-    api::{Api, ListParams, Meta},
+    api::{Api, ListParams},
     Client,
 };
 //use k8s_openapi::apimachinery::pkg::apis::meta::v1::LabelSelector;
@@ -11,11 +11,21 @@ pub use crate::watching::watch_types::WatchTypes;
 use kube_runtime::utils::try_flatten_applied;
 use kube_runtime::watcher;
 use prometheus::HistogramVec;
+use crate::models::watcher_item_spec::WatcherItemSpec;
+use std::collections::BTreeMap;
+use k8s_openapi::api::core::v1::Node;
+use k8s_openapi::api::apps::v1::Deployment;
+use kube_runtime::watcher::{Event};
+use kube::api::Meta;
 
 #[derive(Error, Debug)]
 pub enum WatchError {
     #[error("Unknown error when watching {0}: {1}")]
-    Unknown(String, String),
+    UnknownThing(String, String),
+    #[error("Received targetKind that does not match a known object: {0}")]
+    UnknownKind(String),
+    #[error("Misc unknown: {0}")]
+    Unknown(String)
 }
 
 lazy_static! {
@@ -26,131 +36,64 @@ lazy_static! {
     )
     .unwrap();
 }
+pub fn btree_to_string(input: BTreeMap<String, String>) -> String {
+    let mut result = String::from("");
+    for key in input.keys() {
+        result = format!("{}, {}={}", result, key, input.get(key).unwrap());
+    }
+    result
+}
+
+pub async fn create_specific_watcher(input_obj: WatcherItemSpec) -> anyhow::Result<()> {
+    let client = Client::try_default().await?;
+
+    if let Some(match_labels) = input_obj.selector.unwrap().match_labels {
+        let label_str = btree_to_string(match_labels);
+        let lp = ListParams::default()
+            .allow_bookmarks()
+            .labels(label_str.as_str());
+
+        let kind = input_obj.target_kind.unwrap();
+        match kind.to_lowercase().as_str() {
+            "deployment" => {
+                let watched: Api<Deployment> = Api::all(client);
+                let mut w = watcher(watched, lp).boxed();
+                while let Some(status) = w.try_next().await? {
+                    match status {
+                        Event::Applied(s) => info!("Added object: {}", Meta::name(&s)),
+                        Event::Deleted(s) => info!("Modified object: {}", Meta::name(&s)),
+                        //Event::Restarted(s) => info!("Deleted object: {}", Meta::name(&s)),
+                        _ => info!("Error: {}", WatchError::Unknown(String::from("got a watch event we don't understand")))
+                    }
+                }
+            },
+            "node" => {
+                let watched: Api<Node> = Api::all(client);
+                let mut w = watcher(watched, lp).boxed();
+                while let Some(event) = w.try_next().await? {
+                    info!("Got: {:?}", event);
+                }
+            },
+            _ => {
+                info!("{}",WatchError::UnknownKind(kind));
+            }
+        }
+    } else {
+        info!("{}",WatchError::UnknownThing(String::from("could not decode match_labels"), "die".to_string()));
+    }
+    Ok(())
+}
 
 pub async fn create_and_start_watchers() -> anyhow::Result<()> {
     let client = Client::try_default().await?;
     let lp = ListParams::default().allow_bookmarks();
 
     let mut stream_vec = Vec::new();
-
-    // Node(Node),
-    stream_vec.push(
-        try_flatten_applied(watcher(Api::all(client.clone()), lp.clone()))
-            .map_ok(|obj| WatchTypes::Node(obj))
-            .map_err(|e| WatchError::Unknown(String::from("Node"), e.to_string()))
-            .boxed(),
-    );
-    //Pod(Pod),
-    stream_vec.push(
-        try_flatten_applied(watcher(Api::all(client.clone()), lp.clone()))
-            .map_ok(|obj| WatchTypes::Pod(obj))
-            .map_err(|e| WatchError::Unknown(String::from("Pod"), e.to_string()))
-            .boxed(),
-    );
-
-    //ResourceQuota(ResourceQuota),
-    stream_vec.push(
-        try_flatten_applied(watcher(Api::all(client.clone()), lp.clone()))
-            .map_ok(|obj| WatchTypes::ResourceQuota(obj))
-            .map_err(|e| WatchError::Unknown(String::from("ResourceQuota"), e.to_string()))
-            .boxed(),
-    );
-
-    //DaemonSet(DaemonSet),
-    stream_vec.push(
-        try_flatten_applied(watcher(Api::all(client.clone()), lp.clone()))
-            .map_ok(|obj| WatchTypes::DaemonSet(obj))
-            .map_err(|e| WatchError::Unknown(String::from("DaemonSet"), e.to_string()))
-            .boxed(),
-    );
-    //StatefulSet(StatefulSet),
-    stream_vec.push(
-        try_flatten_applied(watcher(Api::all(client.clone()), lp.clone()))
-            .map_ok(|obj| WatchTypes::StatefulSet(obj))
-            .map_err(|e| WatchError::Unknown(String::from("StatefulSet"), e.to_string()))
-            .boxed(),
-    );
-    //ReplicaSet(ReplicaSet),
-    stream_vec.push(
-        try_flatten_applied(watcher(Api::all(client.clone()), lp.clone()))
-            .map_ok(|obj| WatchTypes::ReplicaSet(obj))
-            .map_err(|e| WatchError::Unknown(String::from("ReplicaSet"), e.to_string()))
-            .boxed(),
-    );
-
-    //HorizontalPodAutoscaler(HorizontalPodAutoscaler),
-    stream_vec.push(
-        try_flatten_applied(watcher(Api::all(client.clone()), lp.clone()))
-            .map_ok(|obj| WatchTypes::HorizontalPodAutoscaler(obj))
-            .map_err(|e| {
-                WatchError::Unknown(String::from("HorizontalPodAutoscaler"), e.to_string())
-            })
-            .boxed(),
-    );
-
-    //Job(Job),
-    stream_vec.push(
-        try_flatten_applied(watcher(Api::all(client.clone()), lp.clone()))
-            .map_ok(|obj| WatchTypes::Job(obj))
-            .map_err(|e| WatchError::Unknown(String::from("Job"), e.to_string()))
-            .boxed(),
-    );
-    //CronJob(CronJob),
-    stream_vec.push(
-        try_flatten_applied(watcher(Api::all(client.clone()), lp.clone()))
-            .map_ok(|obj| WatchTypes::CronJob(obj))
-            .map_err(|e| WatchError::Unknown(String::from("CronJob"), e.to_string()))
-            .boxed(),
-    );
-
-    //PodSecurityPolicy(PodSecurityPolicy),
-    stream_vec.push(
-        try_flatten_applied(watcher(Api::all(client.clone()), lp.clone()))
-            .map_ok(|obj| WatchTypes::PodSecurityPolicy(obj))
-            .map_err(|e| WatchError::Unknown(String::from("PodSecurityPolicy"), e.to_string()))
-            .boxed(),
-    );
-
-    //ConfigMap(ConfigMap),
-    stream_vec.push(
-        try_flatten_applied(watcher(Api::all(client.clone()), lp.clone()))
-            .map_ok(|d| WatchTypes::ConfigMap(d))
-            .map_err(|e| WatchError::Unknown(String::from("ConfigMap"), e.to_string()))
-            .boxed(),
-    );
-    //Deployment(Deployment),
-    stream_vec.push(
-        try_flatten_applied(watcher(Api::all(client.clone()), lp.clone()))
-            .map_ok(|d| WatchTypes::Deployment(d))
-            .map_err(|e| WatchError::Unknown(String::from("Deployment"), e.to_string()))
-            .boxed(),
-    );
-    //Secret(Secret),
-    stream_vec.push(
-        try_flatten_applied(watcher(Api::all(client.clone()), lp.clone()))
-            .map_ok(|d| WatchTypes::Secret(d))
-            .map_err(|e| WatchError::Unknown(String::from("Secret"), e.to_string()))
-            .boxed(),
-    );
-    //Service(Service),
-    stream_vec.push(
-        try_flatten_applied(watcher(Api::all(client.clone()), lp.clone()))
-            .map_ok(|d| WatchTypes::Service(d))
-            .map_err(|e| WatchError::Unknown(String::from("Service"), e.to_string()))
-            .boxed(),
-    );
-    //HelmRelease(HelmRelease),
-    stream_vec.push(
-        try_flatten_applied(watcher(Api::all(client.clone()), lp.clone()))
-            .map_ok(|hr| WatchTypes::HelmRelease(hr))
-            .map_err(|e| WatchError::Unknown(String::from("HelmRelease"), e.to_string()))
-            .boxed(),
-    );
     //Watcher(Watcher),
     stream_vec.push(
         try_flatten_applied(watcher(Api::all(client.clone()), lp.clone()))
             .map_ok(|watched| WatchTypes::Watcher(watched))
-            .map_err(|e| WatchError::Unknown(String::from("Watcher"), e.to_string()))
+            .map_err(|e| WatchError::UnknownThing(String::from("Watcher"), e.to_string()))
             .boxed(),
     );
 
@@ -159,7 +102,13 @@ pub async fn create_and_start_watchers() -> anyhow::Result<()> {
         let result = combined_stream.try_next().await;
         match result {
             Ok(o) => match o {
-                Some(WatchTypes::Watcher(w)) => process_watcher(w),
+                Some(WatchTypes::Watcher(w)) => {
+                    for item in w.spec.watchers.unwrap() {
+                        tokio::spawn(async move {
+                            create_specific_watcher(item).await;
+                        });
+                    }
+                },
                 Some(_) => (),
                 None => info!("Error on reading"),
             },
@@ -170,13 +119,13 @@ pub async fn create_and_start_watchers() -> anyhow::Result<()> {
     }
 }
 
-fn process_watcher(w: crate::models::watcher_spec::Watcher) -> () {
-    let timer = HERALD_FN_HISTOGRAM
-        .with_label_values(&["process_watcher"])
-        .start_timer();
-    info!("watcher: {}", Meta::name(&w));
-    for w_ in w.spec.watchers {
-        info!("watch kind: {:#?}", w_);
-    }
-    timer.observe_duration();
-}
+// fn process_watcher(w: crate::models::watcher_spec::Watcher) -> () {
+//     let timer = HERALD_FN_HISTOGRAM
+//         .with_label_values(&["process_watcher"])
+//         .start_timer();
+//     info!("watcher: {}", Meta::name(&w));
+//     for w_ in w.spec.watchers {
+//         info!("watch kind: {:#?}", w_);
+//     }
+//     timer.observe_duration();
+// }

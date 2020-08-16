@@ -1,3 +1,4 @@
+---
 apiVersion: vsix.me/v1
 kind: Watcher
 metadata:
@@ -9,11 +10,17 @@ spec:
   watchers:
     - namespaces:
         - monitoring
-      target_kind: Deployment
+      targetKind: Deployment
       selector:
+        matchExpressions:
+          - operator: In
+            key: foo
+            values:
+              - foobar
         matchLabels:
+          hello: goodbye
           app.kubernetes.io/name: herald
       notifier:
         url: http://vsix.me
         method: POST
-        format_template_string: "foobar"
+        formatTemplate: "foobar"

@@ -153,7 +153,7 @@ pub async fn create_and_start_watchers() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn process_watcher(w: Watcher) -> ()
+fn process_watcher(w: crate::models::watcher_spec::Watcher) -> ()
 {
     let timer = HERALD_FN_HISTOGRAM.with_label_values(&["process_watcher"]).start_timer();
     info!("watcher: {}", Meta::name(&w));

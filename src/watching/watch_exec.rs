@@ -94,7 +94,7 @@ pub async fn create_specific_watcher(input_obj: WatcherItemSpec) -> anyhow::Resu
 }
 
 pub async fn create_and_start_watchers() -> anyhow::Result<()> {
-    let mut watch_registry: HashMap<String, Sender<()>> = HashMap::new();
+    let mut watch_registry: HashMap<String, Vec<Sender<()>>> = HashMap::new();
     let client = Client::try_default().await?;
     let lp = ListParams::default().allow_bookmarks();
 
@@ -104,11 +104,10 @@ pub async fn create_and_start_watchers() -> anyhow::Result<()> {
     while let Some(watcher_status) = w.try_next().await? {
         match watcher_status {
             Event::Applied(s) => {
+                let mut watch_vec: Vec<Sender<()>> = Vec::new();
+                let watcher_name = s.name();
                 info!("Processing apply on Watcher watch");
                 for item in s.spec.watchers.unwrap() {
-                    let label_str = btree_to_string(item.clone().selector.unwrap().match_labels.unwrap());
-                    let id = format!("{}+{}",item.clone().target_kind.unwrap(),label_str);
-                    info!("Inserting channel into watch registry for key {}", id);
                     let (tx, mut rx) = channel(1);
                     tokio::spawn(async move {
                         select!{
@@ -116,30 +115,35 @@ pub async fn create_and_start_watchers() -> anyhow::Result<()> {
                          _ = rx.next() => info!("Received word we should exit")
                         }
                     });
-                    watch_registry.insert(id,  tx);
+                    watch_vec.push(tx);
                 }
+                watch_registry.insert(watcher_name,  watch_vec);
+
             },
             Event::Deleted(s) => {
                 info!("Processing delete on Watcher watch");
-                for item in s.spec.watchers.unwrap() {
-                    let label_str = btree_to_string(item.clone().selector.unwrap().match_labels.unwrap());
-                    let id = format!("{}+{}",item.clone().target_kind.unwrap(),label_str);
-                    if let Some(watch_channel) = watch_registry.get_mut(&id) {
-                        watch_channel.send(());
-                    }
+                if let Some(watch_channels) = watch_registry.get_mut(&s.name()) {
+                    for watch_channel in watch_channels {
+                        watch_channel.send(()).await;
+                }
                 }
             },
             Event::Restarted(s) => {
                 info!("Processing restart on Watcher watch");
                 for object in s.iter() {
-                    let watchVec = object.spec.watchers.clone();
-                    for item in watchVec.unwrap() {
+                    // first, delete all preexisting watches for this object
+                    if let Some(watch_channels) = watch_registry.get_mut(&object.name()) {
+                        for watch_channel in watch_channels {
+                            watch_channel.send(()).await;
+                        }
+                    }
+
+                    // now, recreate all the watches
+                    let watch_list = object.spec.watchers.clone();
+                    let mut watch_channels = Vec::new();
+                    for item in watch_list.unwrap() {
                         let label_str = btree_to_string(item.clone().selector.unwrap().match_labels.unwrap());
                         let id = format!("{}+{}",item.clone().target_kind.unwrap(),label_str);
-                        if let Some(watch_channel) = watch_registry.get_mut(&id) {
-                            info!("killing channel for key {}", id);
-                            watch_channel.send(());
-                        }
                         info!("Inserting channel into watch registry for key {}", id);
                         let (tx, mut rx) = channel(1);
                         tokio::spawn(async move {
@@ -148,8 +152,9 @@ pub async fn create_and_start_watchers() -> anyhow::Result<()> {
                          _ = rx.next() => info!("Received word we should exit")
                         }
                         });
-                        watch_registry.insert(id,  tx);
+                        watch_channels.push(tx);
                     }
+                    watch_registry.insert(object.name(),  watch_channels);
 
                 }
             },

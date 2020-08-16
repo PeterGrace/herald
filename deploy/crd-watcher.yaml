@@ -40,6 +40,8 @@ spec:
                         properties:
                           matchLabels:
                             description: a list of labels to match
+                            additionalProperties:
+                              type: string
                             type: object
                           matchExpressions:
                             description: a list of expressions to match

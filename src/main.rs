@@ -3,40 +3,54 @@ mod models;
 
 #[macro_use] extern crate log;
 #[macro_use] extern crate serde;
-#[macro_use] extern crate metrics_facade;
-extern crate metrics_runtime;
-
-use tokio;
+#[macro_use] extern crate lazy_static;
+#[macro_use] extern crate prometheus;
+use prometheus::{GaugeVec, TextEncoder, Encoder};
+use tokio::{main, select};
 use watching::create_and_start_watchers;
-use metrics_runtime::{exporters::HttpExporter, observers::PrometheusBuilder, Receiver};
 use std::time::{Duration};
+use hyper::{
+    header::CONTENT_TYPE,
+    service::{make_service_fn, service_fn},
+    Body, Request, Response, Server,
+};
+
+lazy_static! {
+    static ref HERALD_APPVER: GaugeVec = register_gauge_vec!(
+    "herald_app_info",
+    "static app labels that potentially only change at restart",
+    &["crate_version", "git_hash"]
+    ).unwrap();
+}
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     std::env::set_var("RUST_LOG", "info,kube=info");
     env_logger::init();
 
-    let receiver = Receiver::builder()
-        .histogram(Duration::from_secs(5), Duration::from_millis(100))
-        .build()
-        .expect("failed to build receiver");
+    let metrics_addr = ([0,0,0,0], 9898).into();
+    let serve_future = Server::bind(&metrics_addr)
+        .serve(make_service_fn(|_| async {
+            Ok::<_, hyper::Error>(service_fn(serve_metrics))
+        }));
 
-    let mut sink = receiver.sink();
-
-
-    let controller = receiver.controller();
-
-    let addr = "0.0.0.0:23432"
-        .parse()
-        .expect("failed to parse http listen address");
-    let builder = PrometheusBuilder::new();
-    let exporter = HttpExporter::new(controller.clone(), builder, addr);
-    tokio::spawn(exporter.async_run());
-    receiver.install();
-    sink.update_gauge_with_labels("app_data", 1, &[
-        ("version", env!("CARGO_PKG_VERSION")),
-         ("hash", env!("GIT_HASH"))
-         ]);
-    create_and_start_watchers().await?;
+    let appdata_gauge = HERALD_APPVER.with_label_values(&[env!("CARGO_PKG_VERSION"), env!("GIT_HASH")]);
+    appdata_gauge.set(1.0);
+    select! {
+        Ok(_) = serve_future => info!("served request"),
+        Ok(_) = create_and_start_watchers() => info!("finished serving watchers")
+    }
     Ok(())
+}
+async fn serve_metrics(_req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
+    let encoder = TextEncoder::new();
+    let metric_families = prometheus::gather();
+    let mut buffer = vec![];
+    encoder.encode(&metric_families, &mut buffer).unwrap();
+    let response = Response::builder()
+        .status(200)
+        .header(CONTENT_TYPE, encoder.format_type())
+        .body(Body::from(buffer))
+        .unwrap();
+    Ok(response)
 }

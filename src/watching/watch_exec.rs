@@ -19,12 +19,25 @@ use crate::models::helm_release_spec::HelmRelease;
 use crate::models::watcher_spec::{Watcher, WatcherSpec, WatcherItemSpec};
 pub use crate::watching::watch_types::WatchTypes;
 use std::collections::BTreeMap;
+use std::time::{Instant};
+use prometheus::{HistogramVec, TextEncoder};
 
 #[derive(Error, Debug)]
 pub enum WatchError {
     #[error("Unknown error when watching {0}: {1}")]
     Unknown(String, String)
 }
+
+lazy_static! {
+    static ref HERALD_FN_HISTOGRAM: HistogramVec = register_histogram_vec!(
+    "herald_fn_duration_seconds",
+    "The number of seconds it took to process a watcher object",
+    &["function"]
+    ).unwrap();
+}
+
+
+
 
 
 pub async fn create_and_start_watchers() -> anyhow::Result<()> {
@@ -142,10 +155,11 @@ pub async fn create_and_start_watchers() -> anyhow::Result<()> {
 
 fn process_watcher(w: Watcher) -> ()
 {
+    let timer = HERALD_FN_HISTOGRAM.with_label_values(&["process_watcher"]).start_timer();
     info!("watcher: {}", Meta::name(&w));
     for w_ in w.spec.watchers
     {
         info!("watch kind: {:#?}", w_);
     }
-
+    timer.observe_duration();
 }

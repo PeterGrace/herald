@@ -1,4 +1,3 @@
-
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct HelmReleaseSpecRollback {
     /// If set, will prevent hooks from running during rollback

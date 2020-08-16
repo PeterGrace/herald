@@ -12,7 +12,14 @@ use kube::CustomResource;
 use serde::{Deserialize, Serialize};
 
 #[derive(CustomResource, Default, Clone, Debug, PartialEq, Serialize, Deserialize)]
-#[kube(group = "helm.fluxcd.io", kind = "HelmRelease", derive = "PartialEq", derive = "Default", shortname = "hr", version = "v1")]
+#[kube(
+    group = "helm.fluxcd.io",
+    kind = "HelmRelease",
+    derive = "PartialEq",
+    derive = "Default",
+    shortname = "hr",
+    version = "v1"
+)]
 pub struct HelmReleaseSpec {
     #[serde(rename = "chart")]
     pub chart: crate::models::HelmReleaseChartTargetSpec,

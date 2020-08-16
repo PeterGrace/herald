@@ -5,5 +5,4 @@
 rustflags = [
     "-Z", "print-link-args",
     "-C", "link-arg=/stack:4096000",
-    "-C", "link-arg=-zstack-size=4096000"
 ]

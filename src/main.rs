@@ -9,6 +9,9 @@ extern crate serde;
 extern crate lazy_static;
 #[macro_use]
 extern crate prometheus;
+#[macro_use]
+extern crate derive_error;
+extern crate handlebars;
 use hyper::{
     header::CONTENT_TYPE,
     service::{make_service_fn, service_fn},

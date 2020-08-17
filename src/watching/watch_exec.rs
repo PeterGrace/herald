@@ -18,6 +18,8 @@ use kube_runtime::watcher::{Event};
 use kube::api::Meta;
 use tokio::sync::mpsc::{channel, Sender};
 use tokio::select;
+use crate::watching::send_hook::send_hook;
+use handlebars::Handlebars;
 
 #[derive(Error, Debug)]
 pub enum WatchError {
@@ -50,26 +52,52 @@ pub fn btree_to_string(input: BTreeMap<String, String>) -> String {
 }
 
 pub async fn create_specific_watcher(input_obj: WatcherItemSpec) -> anyhow::Result<()> {
+    //TODO: add namespace filtering as well.
     let client = Client::try_default().await?;
+    let mut handlebars = Handlebars::new();
 
-    if let Some(match_labels) = input_obj.selector.unwrap().match_labels {
+    if let Some(match_labels) = input_obj.clone().selector.unwrap().match_labels {
         let label_str = btree_to_string(match_labels);
         let lp = ListParams::default()
             .allow_bookmarks()
             .labels(label_str.as_str());
-        let kind = input_obj.target_kind.unwrap();
+        let kind = input_obj.clone().target_kind.unwrap();
         info!("Creating watcher for kind {} with labelstr {}", kind, label_str);
+        let url = input_obj.clone().notifier.unwrap().url.unwrap();
+        let method = input_obj.clone().notifier.unwrap().method.unwrap();
+        let template_source = input_obj.clone().notifier.unwrap().format_template_string.unwrap();
+        let render_response = handlebars.register_template_string("template", template_source.clone())?;
+
         match kind.to_lowercase().as_str() {
             "deployment" => {
                 let watched: Api<Deployment> = Api::all(client);
                 let mut w = watcher(watched, lp).boxed();
                 while let Some(status) = w.try_next().await? {
                     match status {
-                        Event::Applied(s) => info!("Detected apply on spawn-watch-object: {}", Meta::name(&s)),
-                        Event::Deleted(s) => info!("Detected delete on spawned-watch-object: {}", Meta::name(&s)),
+                        Event::Applied(s) => {
+                            info!("Detected apply on spawn-watch-object: {}", Meta::name(&s));
+                            let template = handlebars.render("template",&s);
+                            match template {
+                                Ok(f) => send_hook(url.clone(), method.clone(), f).await,
+                                Err(e) => info!("{}, string: {:#?}", WatchError::Unknown(String::from("template string for Apply on deployment")), template_source.clone())
+                            }
+                        },
+                        Event::Deleted(s) => {
+                            info!("Detected delete on spawned-watch-object: {}", Meta::name(&s));
+                            let template = handlebars.render("template",&s);
+                            match template {
+                                Ok(f) => send_hook(url.clone(), method.clone(), f).await,
+                                Err(e) => info!("{}, string: {:#?}", WatchError::Unknown(String::from("template string for Delete on deployment")), template_source.clone())
+                            }
+                        },
                         Event::Restarted(s) => {
-                            for deployment in s.iter() {
-                                info!("Detected Restart on spawned-watched-object: {}", Meta::name(deployment));
+                            for obj in s.iter() {
+                                info!("Detected Restart on spawned-watched-object: {}", Meta::name(obj));
+                                let template = handlebars.render("template",&obj);
+                                match template {
+                                    Ok(f) => send_hook(url.clone(), method.clone(), f).await,
+                                    Err(e) => info!("{}, string {:#?}", WatchError::UnknownThing(String::from("template string for restart on deployment"), e.to_string()), template_source.clone())
+                                }
                             }
                         },
                         //_ => info!("Error: {}", WatchError::Unknown(String::from("got a watch event we don't understand")))
@@ -117,7 +145,13 @@ pub async fn create_and_start_watchers() -> anyhow::Result<()> {
                     let (tx, mut rx) = channel(1);
                     tokio::spawn(async move {
                         select!{
-                         _ = create_specific_watcher(item) => info!("watching thread exited...?"),
+                         res = create_specific_watcher(item) => {
+                             match res {
+                                Ok(_) => info!("watcher exited for unknown non-error reason"),
+                                Err(e) => info!("Error when watching: {}",e.to_string())
+                             }
+                         },
+
                          _ = rx.next() => info!("Received word we should exit")
                         }
                     });
@@ -155,7 +189,12 @@ pub async fn create_and_start_watchers() -> anyhow::Result<()> {
                         let (tx, mut rx) = channel(1);
                         tokio::spawn(async move {
                             select!{
-                         _ = create_specific_watcher(item) => info!("watching thread exited...?"),
+                         res = create_specific_watcher(item) => {
+                             match res {
+                                Ok(_) => info!("watcher exited for unknown non-error reason"),
+                                Err(e) => info!("Error when watching: {}",e.to_string())
+                             }
+                         },
                          _ = rx.next() => info!("Received word we should exit")
                         }
                         });

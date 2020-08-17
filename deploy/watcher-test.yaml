@@ -16,6 +16,6 @@ spec:
         matchLabels:
           app.kubernetes.io/name: herald
       notifier:
-        url: http://vsix.me
+        url: https://hooks.slack.com/services/T9VAA3L59/B018R9WEMNJ/foobar
         method: POST
-        formatTemplate: "foobar"
+        formatTemplate: '{"text":"Detected a change to {{kind}}/{{metadata.name}}: image is set to {{spec.template.spec.containers.[0].image}}"}'

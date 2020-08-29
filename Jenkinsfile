@@ -23,7 +23,9 @@ podTemplate(imagePullSecrets: [credential],label: label,idleMinutes: 30,
                         hash = sh(returnStdout: true, script: "git rev-parse --short HEAD").trim()
                     }
                     stage('Build') {
-                        sh('cargo build')
+                        sh '''
+                        cargo build
+                        '''
                     }
                 }
             }

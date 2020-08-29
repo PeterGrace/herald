@@ -1,5 +1,6 @@
 mod models;
 mod watching;
+mod tests;
 
 #[macro_use]
 extern crate log;
@@ -9,7 +10,6 @@ extern crate serde;
 extern crate lazy_static;
 #[macro_use]
 extern crate prometheus;
-#[macro_use]
 extern crate derive_error;
 extern crate handlebars;
 use hyper::{

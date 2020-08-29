@@ -1,15 +1,27 @@
-pub async fn send_hook(url: String, method: String, body: String) -> ()  {
-    let client = reqwest::Client::new();
+use reqwest::{
+    Client,
+    Response
+};
+use std::error;
+
+pub async fn send_hook(url: String, method: String, body: String) -> Result<Response, Box<dyn error::Error>>  {
+    let client = Client::new();
     match method.to_lowercase().as_str() {
         "get" => {
-            let res = client.get(&url).send().await;
-            info!("response code: {}",res.unwrap().status())
+            let result = client.get(&url).send().await;
+            let response = result.unwrap();
+            info!("response code: {}",response.status());
+            Ok(response)
             }
         "post" => {
             info!("Body to be sent is: {}", body);
-            let res = client.post(&url).body(body).send().await;
-            info!("response code: {}",res.unwrap().status())
+            let result = client.post(&url).body(body).send().await;
+            let response = result.unwrap();
+            info!("response code: {}",response.status());
+            Ok(response)
         }
-        _ => info!("Unknown request type: {}", method)
+        _ => {
+            Err("unknown request type".into())
+        }
     }
 }

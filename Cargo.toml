@@ -11,6 +11,10 @@ default = ["native-tls"]
 native-tls = ["reqwest/native-tls", "kube/native-tls", "kube-runtime/native-tls"]
 rustls-tls = ["reqwest/rustls-tls", "kube/rustls-tls", "kube-runtime/rustls-tls"]
 
+[dev-dependencies]
+httpmock = "0.4.3"
+httpmock-macros = "0.3.0"
+
 [dependencies]
 anyhow = "1.0.31"
 env_logger = "0.7.1"

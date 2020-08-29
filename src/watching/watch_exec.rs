@@ -66,7 +66,7 @@ pub async fn create_specific_watcher(input_obj: WatcherItemSpec) -> anyhow::Resu
         let url = input_obj.clone().notifier.unwrap().url.unwrap();
         let method = input_obj.clone().notifier.unwrap().method.unwrap();
         let template_source = input_obj.clone().notifier.unwrap().format_template_string.unwrap();
-        let render_response = handlebars.register_template_string("template", template_source.clone())?;
+        handlebars.register_template_string("template", template_source.clone())?;
 
         match kind.to_lowercase().as_str() {
             "deployment" => {
@@ -78,16 +78,33 @@ pub async fn create_specific_watcher(input_obj: WatcherItemSpec) -> anyhow::Resu
                             info!("Detected apply on spawn-watch-object: {}", Meta::name(&s));
                             let template = handlebars.render("template",&s);
                             match template {
-                                Ok(f) => send_hook(url.clone(), method.clone(), f).await,
-                                Err(e) => info!("{}, string: {:#?}", WatchError::Unknown(String::from("template string for Apply on deployment")), template_source.clone())
+                                Ok(f) => {
+                                    let response = send_hook(url.clone(), method.clone(), f).await;
+                                    match response {
+                                        Ok(_) => (),
+                                        Err(e) => {
+                                            info!("Error when trying to send applied-class webhook: {}",e);
+                                        }
+                                    };
+
+                                },
+                                Err(e) => info!("{}, string: {:#?}", WatchError::Unknown(String::from(format!("template string for Apply on deployment: {}", e))), template_source.clone())
                             }
                         },
                         Event::Deleted(s) => {
                             info!("Detected delete on spawned-watch-object: {}", Meta::name(&s));
                             let template = handlebars.render("template",&s);
                             match template {
-                                Ok(f) => send_hook(url.clone(), method.clone(), f).await,
-                                Err(e) => info!("{}, string: {:#?}", WatchError::Unknown(String::from("template string for Delete on deployment")), template_source.clone())
+                                Ok(f) => {
+                                    let response = send_hook(url.clone(), method.clone(), f).await;
+                                    match response {
+                                        Ok(_) => (),
+                                        Err(e) => {
+                                            info!("Error when trying to send deleted-class webhook: {}",e);
+                                        }
+                                    };
+                                }
+                                Err(e) => info!("{}, string: {:#?}", WatchError::Unknown(String::from(format!("template string for Delete on deployment: {}",e))), template_source.clone())
                             }
                         },
                         Event::Restarted(s) => {
@@ -95,7 +112,15 @@ pub async fn create_specific_watcher(input_obj: WatcherItemSpec) -> anyhow::Resu
                                 info!("Detected Restart on spawned-watched-object: {}", Meta::name(obj));
                                 let template = handlebars.render("template",&obj);
                                 match template {
-                                    Ok(f) => send_hook(url.clone(), method.clone(), f).await,
+                                    Ok(f) => {
+                                        let response = send_hook(url.clone(), method.clone(), f).await;
+                                        match response {
+                                            Ok(_) => (),
+                                            Err(e) => {
+                                                info!("Error when trying to send restarted-class webhook: {}",e);
+                                            }
+                                        };
+                                    },
                                     Err(e) => info!("{}, string {:#?}", WatchError::UnknownThing(String::from("template string for restart on deployment"), e.to_string()), template_source.clone())
                                 }
                             }
@@ -135,7 +160,11 @@ pub async fn create_and_start_watchers() -> anyhow::Result<()> {
                 info!("Processing delete on Watcher: {}",&s.name());
                 if let Some(watch_channels) = watch_registry.get_mut(&s.name()) {
                     for watch_channel in watch_channels {
-                        watch_channel.send(()).await;
+                        let response = watch_channel.send(()).await;
+                        match response {
+                            Ok(_) => (),
+                            Err(e) => info!("Received error from applied-webhook watcher: {}",e)
+                        }
                     }
                 }
                 let mut watch_vec: Vec<Sender<()>> = Vec::new();
@@ -164,7 +193,11 @@ pub async fn create_and_start_watchers() -> anyhow::Result<()> {
                 info!("Processing delete on Watcher: {}",&s.name());
                 if let Some(watch_channels) = watch_registry.get_mut(&s.name()) {
                     for watch_channel in watch_channels {
-                        watch_channel.send(()).await;
+                        let response = watch_channel.send(()).await;
+                        match response {
+                            Ok(_) => (),
+                            Err(e) => info!("Received error from deleted-webhook watcher: {}",e)
+                        }
                 }
                 }
             },
@@ -174,7 +207,12 @@ pub async fn create_and_start_watchers() -> anyhow::Result<()> {
                     // first, delete all preexisting watches for this object
                     if let Some(watch_channels) = watch_registry.get_mut(&object.name()) {
                         for watch_channel in watch_channels {
-                            watch_channel.send(()).await;
+                            let response = watch_channel.send(()).await;
+                            match response {
+                                Ok(_) => (),
+                                Err(e) => info!("Received error from restarted-webhook watcher: {}",e)
+                            }
+
                         }
                     }
 

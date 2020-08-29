@@ -15,4 +15,4 @@ I need.
   about a webhook destination.
   - When Herald detects a modification to a kind, that matches the namespaces 
   and labelselector,it will emit a webhook as specified to a remote service, 
-  e.g. slack or discord 
+  e.g. slack or discord.

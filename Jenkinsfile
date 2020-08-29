@@ -2,12 +2,12 @@
 def imageName = "dokubectl"
 def registry = "https://dreg.vsix.me:9443"
 def credential = "dreg-registry"
-def label = UUID.randomUUID().toString()
+def label = "herald-build"
 def tag = null
 podTemplate(imagePullSecrets: [credential],label: label,idleMinutes: 30,
   containers: [
     containerTemplate(name: 'jnlp', image: 'dreg.vsix.me:9443/jnlp-docker:latest', args: '${computer.jnlpmac} ${computer.name}'),
-    containerTemplate(name: 'rust-nightly', image: 'dreg.vsix.me:9443/rust_nightly:20200828', command: 'cat', ttyEnabled: true),
+    containerTemplate(name: 'rust-nightly', image: 'dreg.vsix.me:9443/rust_nightly:20200828-01', command: 'cat', ttyEnabled: true),
     ],
     volumes: [
     hostPathVolume(hostPath: '/var/run/docker.sock', mountPath: '/var/run/docker.sock'),

@@ -1,5 +1,5 @@
 ---
-name: cargo-check
+name: pr-code-test-and-coverage
 
 on:
   pull_request:
@@ -13,7 +13,7 @@ jobs:
       - name: install rust stable toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: nightly
       - name: run cargo tests
         uses: actions-rs/cargo@v1
         with:

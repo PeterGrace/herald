@@ -1,6 +1,6 @@
 ---
 name: cargo-check
-  description: Check the existing code to ensure it compiles
+
 on:
   pull_request:
     branches: [ master ]

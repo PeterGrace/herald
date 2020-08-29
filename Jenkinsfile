@@ -16,7 +16,7 @@ podTemplate(imagePullSecrets: [credential],label: label,idleMinutes: 30,
       ) {
     node(label) {
             container("rust-nightly") {
-                dir("/workspace") {
+                dir("/workspace/herald") {
                     stage('Checkout') {
                         checkout scm
                         tag = sh(returnStdout: true, script: "git describe --tags || echo 'none'").trim()

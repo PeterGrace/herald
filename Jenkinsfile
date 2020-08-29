@@ -7,7 +7,7 @@ def tag = null
 podTemplate(imagePullSecrets: [credential],label: label,
   containers: [
     containerTemplate(name: 'jnlp', image: 'dreg.vsix.me:9443/jnlp-docker:latest', args: '${computer.jnlpmac} ${computer.name}'),
-    containerTemplate(name: 'rust-nightly', image: 'dreg.vsix.me:9443/rust-nightly:20200828', args: '${computer.jnlpmac} ${computer.name}'),
+    containerTemplate(name: 'rust-nightly', image: 'dreg.vsix.me:9443/rust_nightly:20200828', args: '${computer.jnlpmac} ${computer.name}'),
     ],
     volumes: [
     hostPathVolume(hostPath: '/var/run/docker.sock', mountPath: '/var/run/docker.sock'),

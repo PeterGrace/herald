@@ -44,3 +44,16 @@ async fn test_send_get_hook() {
     assert_eq!(response.status(), 200);
     assert_eq!(search_mock.times_called(), 1);
 }
+#[tokio::test]
+async fn test_send_hook_invalid_method() {
+    let response = send_hook(
+        String::from("foo"),
+        String::from("HEAD"),
+        String::from("{}"),
+    )
+    .await;
+    assert!(
+        response.is_err(),
+        "send_hook should error for an un-implemented method"
+    )
+}

@@ -24,7 +24,6 @@ async fn test_send_hook() {
     assert_eq!(search_mock.times_called(), 1);
 }
 #[tokio::test]
-
 async fn test_send_get_hook() {
     let mock_server = MockServer::start();
 
@@ -43,6 +42,5 @@ async fn test_send_get_hook() {
     .unwrap();
 
     assert_eq!(response.status(), 200);
-
     assert_eq!(search_mock.times_called(), 1);
 }

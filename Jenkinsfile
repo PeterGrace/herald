@@ -26,6 +26,7 @@ podTemplate(imagePullSecrets: [credential],label: label,idleMinutes: 30,
                         sh '''
                         ./checktest.sh
                         '''
+                        cobertura coberturaReportFile: 'cobertura.xml'
                     }
                 }
             }

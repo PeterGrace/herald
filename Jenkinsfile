@@ -33,7 +33,7 @@ podTemplate(imagePullSecrets: [credential],label: label,idleMinutes: 30,
                     stage('Build') {
                docker.withRegistry(registry, credential) {
                         intermediate = docker.build("herald-latest","-f Dockerfile.intermediate .")
-                        app = docker.build(imageName)
+                        app = docker.build(imageName, "-f Dockerfile.package .")
                }
                     }
                     stage('Push') {

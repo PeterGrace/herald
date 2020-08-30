@@ -32,6 +32,7 @@ pub enum WatchTypes {
 }
 
 impl Default for WatchTypes {
+    #[cfg_attr(tarpaulin, skip)]
     fn default() -> Self {
         WatchTypes::All
     }

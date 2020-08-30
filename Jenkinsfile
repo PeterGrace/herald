@@ -28,11 +28,16 @@ podTemplate(imagePullSecrets: [credential],label: label,idleMinutes: 30,
                         '''
                         cobertura coberturaReportFile: 'cobertura.xml'
                     }
+                    stage('Release-Build') {
+                        sh '''
+                        cargo build --release
+                        '''
+                    }
             }
             container("jnlp") {
-                    stage('Build') {
+                    stage('Package') {
                docker.withRegistry(registry, credential) {
-                        app = docker.build(imageName, "-f Dockerfile.package .")
+                        app = docker.build(imageName)
                }
                     }
                     stage('Push') {

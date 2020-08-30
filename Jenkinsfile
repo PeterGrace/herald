@@ -47,4 +47,3 @@ podTemplate(imagePullSecrets: [credential],label: label,idleMinutes: 30,
                 }
             }
         }
-}

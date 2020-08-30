@@ -1,0 +1,6 @@
+FROM dreg.vsix.me:9443/rust_nightly:20200828-05 AS build
+RUN mkdir /src
+WORKDIR /src
+ADD . /src
+RUN cargo build --release
+

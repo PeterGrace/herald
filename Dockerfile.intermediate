@@ -1,0 +1,5 @@
+FROM dreg.vsix.me:9443/herald-build:latest
+WORKDIR /src
+ADD . /src
+RUN cargo build --release
+

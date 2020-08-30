@@ -1,7 +1,7 @@
 extern crate httpmock;
 
 use crate::watching::send_hook::send_hook;
-use httpmock::Method::POST;
+use httpmock::Method::{GET, POST};
 use httpmock::{Mock, MockServer};
 
 #[tokio::test]

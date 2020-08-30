@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export CARGO_INCREMENTAL=0
+CARGO_INCREMENTAL=0
 RUSTFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests'
 RUSTDOCFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests'
 cargo test --no-fail-fast

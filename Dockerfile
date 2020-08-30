@@ -11,7 +11,7 @@ RUN chmod a+x /tini \
 
 ENTRYPOINT ["/tini", "--"]
 
-COPY --from=herald-latest /src/target/release/herald /herald/herald
+COPY /workspace/herald/target/release/herald /herald/herald
 ADD docker/entrypoint.sh /entrypoint.sh
 CMD ["/entrypoint.sh"]
 

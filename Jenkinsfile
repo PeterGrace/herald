@@ -32,7 +32,6 @@ podTemplate(imagePullSecrets: [credential],label: label,idleMinutes: 30,
             container("jnlp") {
                     stage('Build') {
                docker.withRegistry(registry, credential) {
-                        intermediate = docker.build("herald-latest","-f Dockerfile.intermediate .")
                         app = docker.build(imageName, "-f Dockerfile.package .")
                }
                     }

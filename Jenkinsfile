@@ -30,7 +30,7 @@ podTemplate(imagePullSecrets: [credential],label: label,idleMinutes: 30,
                     }
                     stage('Test') {
                         sh '''
-                        checktest.sh
+                        ./checktest.sh
                         '''
                     }
                 }

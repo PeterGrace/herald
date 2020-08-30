@@ -1,5 +1,5 @@
 // this guarantees the node will use this template
-def imageName = "dokubectl"
+def imageName = "herald"
 def registry = "https://dreg.vsix.me:9443"
 def credential = "dreg-registry"
 def label = "herald-build"
@@ -28,6 +28,21 @@ podTemplate(imagePullSecrets: [credential],label: label,idleMinutes: 30,
                         '''
                         cobertura coberturaReportFile: 'cobertura.xml'
                     }
+                    stage('Build') {
+                        app = docker.build(imageName)
+                    }
+                    stage('Push') {
+                       docker.withRegistry(registry, credential) {
+                            app.push("latest")
+                            if (tag == 'none') {
+                                app.push(hash)
+                            } else {
+                                app.push(tag)
+                                app.push(hash)
+                            }
+                       }
+                    }
+        }
                 }
             }
         }

@@ -5,8 +5,8 @@
 replicaCount: 1
 
 image:
-  repository: nginx
-  pullPolicy: IfNotPresent
+  repository: dreg.vsix.me:9443/herald:latest
+  pullPolicy: Always
 
 imagePullSecrets: []
 nameOverride: ""
@@ -22,15 +22,10 @@ serviceAccount:
   name:
 
 podSecurityContext: {}
-  # fsGroup: 2000
 
-securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
+securityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
 
 service:
   type: ClusterIP

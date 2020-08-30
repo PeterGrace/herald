@@ -29,6 +29,7 @@ podTemplate(imagePullSecrets: [credential],label: label,idleMinutes: 30,
                         cobertura coberturaReportFile: 'cobertura.xml'
                     }
                     stage('Build') {
+                        intermediate = docker.build("herald-latest","-f Dockerfile.intermediate")
                         app = docker.build(imageName)
                     }
                     stage('Push') {

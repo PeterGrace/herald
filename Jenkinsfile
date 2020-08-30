@@ -15,8 +15,8 @@ podTemplate(imagePullSecrets: [credential],label: label,idleMinutes: 30,
     ]
       ) {
     node(label) {
-            container("rust-nightly") {
                 dir("/workspace/herald") {
+            container("rust-nightly") {
                     stage('Checkout') {
                         checkout scm
                         tag = sh(returnStdout: true, script: "git describe --tags || echo 'none'").trim()
@@ -28,9 +28,13 @@ podTemplate(imagePullSecrets: [credential],label: label,idleMinutes: 30,
                         '''
                         cobertura coberturaReportFile: 'cobertura.xml'
                     }
+            }
+            container("jnlp") {
                     stage('Build') {
+               docker.withRegistry(registry, credential) {
                         intermediate = docker.build("herald-latest","-f Dockerfile.intermediate")
                         app = docker.build(imageName)
+               }
                     }
                     stage('Push') {
                        docker.withRegistry(registry, credential) {

@@ -75,6 +75,7 @@ podTemplate(imagePullSecrets: [credential],label: label,idleMinutes: 30,
                             }
                        }
                     }
+            }
             stage('Update Chart') {
                 container('dokubectl') {
                     datever = sh(returnStdout: true, script: "date +%Y%m%d").trim()

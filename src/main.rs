@@ -1,6 +1,6 @@
 mod models;
-mod watching;
 mod tests;
+mod watching;
 
 #[macro_use]
 extern crate log;
@@ -33,9 +33,14 @@ lazy_static! {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     std::env::set_var("RUST_LOG", "info,kube=info");
+    let metrics_port: u16;
+    match std::env::var("HERALD_METRICS_PORT") {
+        Ok(val) => metrics_port = val.parse()?,
+        Err(e) => metrics_port = 9898,
+    }
     env_logger::init();
 
-    let metrics_addr = ([0, 0, 0, 0], 9898).into();
+    let metrics_addr = ([0, 0, 0, 0], metrics_port).into();
     let serve_future = Server::bind(&metrics_addr).serve(make_service_fn(|_| async {
         Ok::<_, hyper::Error>(service_fn(serve_metrics))
     }));

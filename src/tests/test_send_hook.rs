@@ -1,7 +1,11 @@
+#[cfg(test)]
 extern crate httpmock;
 
+#[cfg(test)]
 use crate::watching::send_hook::send_hook;
+#[cfg(test)]
 use httpmock::Method::{GET, POST};
+#[cfg(test)]
 use httpmock::{Mock, MockServer};
 
 #[tokio::test]

@@ -31,6 +31,7 @@ podTemplate(imagePullSecrets: [credential],label: label,idleMinutes: 30,
                     stage('Release-Build') {
                         sh '''
                         cargo build --release
+                        find /workspace/herald -name herald
                         '''
                     }
             }

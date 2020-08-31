@@ -5,7 +5,7 @@
 replicaCount: 1
 
 image:
-  repository: dreg.vsix.me:9443/herald:latest
+  repository: dreg.vsix.me:9443/herald
   pullPolicy: Always
 
 imagePullSecrets: []

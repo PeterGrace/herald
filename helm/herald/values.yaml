@@ -8,6 +8,9 @@ image:
   repository: dreg.vsix.me:9443/herald
   pullPolicy: Always
 
+tagversion: 'version'
+version: 'version'
+
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""

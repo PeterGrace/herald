@@ -31,6 +31,7 @@ podTemplate(imagePullSecrets: [credential],label: label,idleMinutes: 30,
   containers: [
     containerTemplate(name: 'jnlp', image: 'dreg.vsix.me:9443/jnlp-docker:c33362f', args: '${computer.jnlpmac} ${computer.name}'),
     containerTemplate(name: 'rust-nightly', image: 'dreg.vsix.me:9443/rust_nightly:20200828-05', command: 'cat', ttyEnabled: true),
+    containerTemplate(name: 'dokubectl', image: 'dreg.vsix.me:9443/dokubectl:35e61b9', command: 'cat', ttyEnabled: true),
     ],
     volumes: [
     hostPathVolume(hostPath: '/var/run/docker.sock', mountPath: '/var/run/docker.sock'),

@@ -4,6 +4,29 @@ def registry = "https://dreg.vsix.me:9443"
 def credential = "dreg-registry"
 def label = "herald-build"
 def tag = null
+
+def abortBuildIfTriggeredBySkippableCommit() {
+    def changeSetCount = 0;
+    def ciSkipCount = 0;
+    if (currentBuild.changeSets != null) {
+        for (changeSetList in currentBuild.changeSets) {
+            for (changeSet in changeSetList) {
+                changeSetCount++;
+                if (changeSet.msg.contains('[ci-skip]')) {
+                    ciSkipCount++;
+                }
+            }
+        }
+    }
+
+    if (changeSetCount > 0 && changeSetCount == ciSkipCount) {
+        currentBuild.result = 'NOT_BUILT'
+        error("Stopping to prevent auto trigger. All commits contained [ci-skip]")
+    }
+}
+
+
+
 podTemplate(imagePullSecrets: [credential],label: label,idleMinutes: 30,
   containers: [
     containerTemplate(name: 'jnlp', image: 'dreg.vsix.me:9443/jnlp-docker:c33362f', args: '${computer.jnlpmac} ${computer.name}'),
@@ -51,6 +74,26 @@ podTemplate(imagePullSecrets: [credential],label: label,idleMinutes: 30,
                             }
                        }
                     }
+            stage('Update Chart') {
+                container('dokubectl') {
+                    datever = sh(returnStdout: true, script: "date +%Y%m%d").trim()
+                    sh "/app/yq w -i ./helm/herald/Chart.yaml version ${datever}-${hash}"
+                    sh "/app/yq w -i ./helm/herald/Chart.yaml appVersion ${datever}-${hash}"
+                    sh 'helm push -f ./helm/herald vsix'
+                }
+            }
+            stage('Deploy') {
+                build(
+                    job: 'support/update-flux',
+                    parameters: [
+                        string(name: "K8S_NAMESPACE", value: "monitoring"),
+                        string(name: "K8S_HELMRELEASE", value: "herald"),
+                        string(name: "HELM_CHARTVER", value: "${datever}-${hash}"),
+                        string(name: "IMAGE_TAG", value: "${hash}"),
+                        string(name: "KUSTOMIZE_PATH", value: "deploy/keim")
+                        ])
+                    currentBuild.result = 'SUCCESS'
+            }
         }
                 }
             }

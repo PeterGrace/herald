@@ -15,6 +15,9 @@ rustls-tls = ["reqwest/rustls-tls", "kube/rustls-tls", "kube-runtime/rustls-tls"
 httpmock = "0.4.3"
 httpmock-macros = "0.3.0"
 
+[build-dependencies]
+auditable-build = "0.1"
+
 [dependencies]
 anyhow = "1.0.31"
 env_logger = "0.7.1"
@@ -42,3 +45,4 @@ lazy_static = "1.4.0"
 hyper = "0.13.7"
 handlebars = "3.4.0"
 derive-error = "0.0.4"
+auditable = "0.1.0"

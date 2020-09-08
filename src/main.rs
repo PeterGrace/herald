@@ -21,6 +21,8 @@ use prometheus::{Encoder, GaugeVec, TextEncoder};
 use tokio;
 use watching::create_and_start_watchers;
 
+static COMPRESSED_DEPENDENCY_LIST: &[u8] = auditable::inject_dependency_list!();
+
 lazy_static! {
     static ref HERALD_APPVER: GaugeVec = register_gauge_vec!(
         "herald_app_info",
@@ -50,6 +52,12 @@ async fn main() -> anyhow::Result<()> {
     appdata_gauge.set(1.0);
     tokio::spawn(async move { serve_future.await });
 
+    info!(
+        "Herald cargover:{} githash:{} auditable_dependencies:{}",
+        env!("CARGO_PKG_VERSION"),
+        env!("GIT_HASH"),
+        COMPRESSED_DEPENDENCY_LIST[0]
+    );
     let result = create_and_start_watchers().await;
     match result {
         Ok(_) => (),

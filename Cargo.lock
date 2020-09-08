@@ -216,6 +216,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "auditable"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4a5688d93433d0c5d82a0214b490358112f359b69efe8093b45e80b48262e891"
+
+[[package]]
+name = "auditable-build"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7b75a4eac8b65ab1e9d03394cd522eace98a452554651f3dda58a609873a1bd2"
+dependencies = [
+ "auditable-serde",
+ "cargo_metadata",
+ "miniz_oxide",
+ "serde_json",
+]
+
+[[package]]
+name = "auditable-serde"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7b6cab96878190de929001e8d9c15bcafbd21d1c259b010e2b1ee8ed1f5786ae"
+dependencies = [
+ "cargo_metadata",
+ "semver 0.10.0",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -333,6 +363,17 @@ name = "cache-padded"
 version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "631ae5198c9be5e753e5cc215e1bd73c2b466a3565173db433f52bb9d3e66dba"
+
+[[package]]
+name = "cargo_metadata"
+version = "0.11.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c990b1694d29f8e477f456db1b2fcd5dd1cd6e29d5be082df45213e8834eb39a"
+dependencies = [
+ "semver 0.10.0",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "case"
@@ -914,6 +955,8 @@ name = "herald"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "auditable",
+ "auditable-build",
  "color-eyre",
  "derive-error",
  "either",
@@ -1971,7 +2014,7 @@ version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "138e3e0acb6c9fb258b19b67cb8abd63c00679d2851805ea151465464fe9030a"
 dependencies = [
- "semver",
+ "semver 0.9.0",
 ]
 
 [[package]]
@@ -2049,6 +2092,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1d7eb9ef2c18661902cc47e535f9bc51b78acd254da71d375c2f6720d9a40403"
 dependencies = [
  "semver-parser",
+]
+
+[[package]]
+name = "semver"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "394cec28fa623e00903caf7ba4fa6fb9a0e260280bb8cdbbba029611108a0190"
+dependencies = [
+ "semver-parser",
+ "serde",
 ]
 
 [[package]]

@@ -1,0 +1,45 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - master
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Rust Toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+      - name: Cache target folder
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/cache
+            !~/cache/exclude
+            target/
+          key: ${{ runner.os }}-rustbuild
+      - name: Cargo Test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          toolchain: nightly
+      - name: Cargo Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          toolchain: nightly
+          args: --release
+      - name: Push to Docker Hub
+        uses: docker/build-push-action@v1
+        with:
+          build_args: "app_env=release"
+          file: ./Dockerfile
+          username: petergrace
+          password: ${{ secrets.HUB_DOCKER_PAT }}
+          repository: petergrace/herald
+          tag_with_ref: true

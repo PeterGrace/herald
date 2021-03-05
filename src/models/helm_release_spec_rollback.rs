@@ -1,4 +1,6 @@
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+use schemars::JsonSchema;
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct HelmReleaseSpecRollback {
     /// If set, will prevent hooks from running during rollback
     #[serde(rename = "disableHooks", skip_serializing_if = "Option::is_none")]

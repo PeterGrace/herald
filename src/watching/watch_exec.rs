@@ -181,7 +181,7 @@ pub async fn create_and_start_watchers() -> anyhow::Result<()> {
                              }
                          },
 
-                         _ = rx.next() => info!("Received word we should exit")
+                         _ = rx.recv() => info!("Received word we should exit")
                         }
                     });
                     watch_vec.push(tx);
@@ -233,7 +233,7 @@ pub async fn create_and_start_watchers() -> anyhow::Result<()> {
                                 Err(e) => info!("Error when watching: {}",e.to_string())
                              }
                          },
-                         _ = rx.next() => info!("Received word we should exit")
+                         _ = rx.recv() => info!("Received word we should exit")
                         }
                         });
                         watch_channels.push(tx);

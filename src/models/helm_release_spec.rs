@@ -10,8 +10,9 @@
 
 use kube::CustomResource;
 use serde::{Deserialize, Serialize};
+use schemars::JsonSchema;
 
-#[derive(CustomResource, Default, Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(CustomResource, Default, Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[kube(
     group = "helm.fluxcd.io",
     kind = "HelmRelease",

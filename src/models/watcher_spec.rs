@@ -1,8 +1,9 @@
 pub use crate::models::watcher_item_spec::WatcherItemSpec;
 use kube::CustomResource;
 use serde::{Deserialize, Serialize};
+use schemars::JsonSchema;
 
-#[derive(CustomResource, Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
+#[derive(CustomResource, Clone, Debug, PartialEq, Default, Serialize, Deserialize, JsonSchema)]
 #[kube(
     group = "vsix.me",
     kind = "Watcher",
